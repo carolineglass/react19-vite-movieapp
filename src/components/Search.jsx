@@ -2,17 +2,12 @@ import React from 'react'
 
 const Search = ({searchTerm, setSearchTerm}) => {
 
-    const handleSearch = () => {
-        console.log("search clicked: ", searchTerm);
-    }
-
     return (
         <div className='search'>
         <div>
             <img 
                 src="search.svg" 
-                alt="Search" 
-                onClick={handleSearch}
+                alt="Search"
                 className='cursor-pointer'
             />
             <input
