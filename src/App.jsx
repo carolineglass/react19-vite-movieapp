@@ -2,6 +2,7 @@ import { React, useEffect, useState} from 'react';
 import Search from './components/Search';
 import Spinner from './components/Spinner';
 import MovieCard from './components/MovieCard';
+import Pagination from './components/Pagination';
 import { useDebounce } from 'react-use';
 import { updateSearchCount, getTrendingMovies  } from './appwrite';
 
@@ -121,6 +122,7 @@ const App = () => {
           )}
         </section>
       </div>
+      <Pagination />
     </main>
   )
 }
