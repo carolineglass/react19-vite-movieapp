@@ -1,4 +1,4 @@
-import { React, useEffect, useState} from 'react';
+import { React, useEffect, useState, useRef} from 'react';
 import Search from './components/Search';
 import Spinner from './components/Spinner';
 import MovieCard from './components/MovieCard';
@@ -26,20 +26,29 @@ const App = () => {
 
   const [trendingMovies, setTrendingMovies] = useState([]);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalResults, setTotalResults] = useState(0);
+
+  // Ref for scrolling to "All Movies" section on page change
+  const allMoviesRef = useRef(null);
+  // Flag to only scroll after pagination clicks, not on initial load or search changes
+  const shouldScrollRef = useRef(false);
+
   // Debounce the search term to avoid too many API calls when the user types quickly
   // useDebounce is a custom hook that delays the execution of a function
   useDebounce(() => {
     setDebouncedSearchTerm(searchTerm)
   }, 500, [searchTerm]);
 
-  const fetchMovies = async (query = '') => {
+  const fetchMovies = async (query = '', page = 1) => {
     setLoading(true);
     setErrorMessage('');
 
     try {
       const endpoint = query
-        ? `${API_BASE_URL}/search/movie?query=${encodeURIComponent(query)}` 
-        : `${API_BASE_URL}/discover/movie?sort_by=popularity.desc`
+        ? `${API_BASE_URL}/search/movie?query=${encodeURIComponent(query)}&page=${page}`
+        : `${API_BASE_URL}/discover/movie?sort_by=popularity.desc&page=${page}`
       const response = await fetch(endpoint, API_OPTIONS);
       if (!response.ok) {
         throw new Error('Failed to fetch movies');
@@ -51,10 +60,13 @@ const App = () => {
         return;
       }
 
-      console.log(data);
       setMovieList(data.results || []);
+      // TMDB API errors beyond page 500, so cap it there
+      setTotalPages(Math.min(data.total_pages || 0, 500));
+      setTotalResults(data.total_results || 0);
 
-      if (query && data.results.length > 0) {
+      // Only track search analytics on page 1 to avoid duplicate counts per query
+      if (query && data.results.length > 0 && page === 1) {
         const movie = data.results[0];
         await updateSearchCount(query, movie);
       }
@@ -80,9 +92,26 @@ const App = () => {
     loadTrendingMovies();
   }, []);
 
+  // Reset to page 1 whenever the search query changes
   useEffect(() => {
-    fetchMovies(debouncedSearchTerm);
+    setCurrentPage(1);
+    fetchMovies(debouncedSearchTerm, 1);
   }, [debouncedSearchTerm]);
+
+  // Scroll to "All Movies" after loading completes, but only when triggered by pagination
+  // (shouldScrollRef prevents scrolling on initial load or search changes)
+  useEffect(() => {
+    if (!loading && shouldScrollRef.current) {
+      shouldScrollRef.current = false;
+      allMoviesRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [loading]);
+
+  const handlePageChange = (page) => {
+    shouldScrollRef.current = true;
+    setCurrentPage(page);
+    fetchMovies(debouncedSearchTerm, page);
+  };
 
   return (
     <main>
@@ -107,22 +136,41 @@ const App = () => {
           </section>
         )}
         <section className='all-movies'>
-          <h2 className='mt-[40px]'>All Movies</h2>
-          
-          {loading ? (
+          <div className='flex items-center justify-between mt-[40px] scroll-mt-[40px]' ref={allMoviesRef}>
+            <h2>All Movies</h2>
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalResults={totalResults}
+                onPageChange={handlePageChange}
+                compact
+              />
+            )}
+          </div>
+
+          {/* Show spinner only on initial load; on page changes, dim existing results instead */}
+          {loading && movieList.length === 0 ? (
             <Spinner />
           ) : errorMessage ? (
             <p className='text-red-500'>{errorMessage}</p>
           ) : (
-            <ul>
+            <ul className={loading ? 'opacity-50 pointer-events-none' : ''}>
               {movieList.map((movie) => (
                 <MovieCard key={movie.id} movie={movie} />
               ))}
             </ul>
           )}
+          {!loading && totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalResults={totalResults}
+              onPageChange={handlePageChange}
+            />
+          )}
         </section>
       </div>
-      <Pagination />
     </main>
   )
 }
