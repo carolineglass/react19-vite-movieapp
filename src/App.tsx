@@ -1,4 +1,4 @@
-import { React, useEffect, useState, useRef} from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Search from './components/Search';
 import Spinner from './components/Spinner';
@@ -6,25 +6,26 @@ import MovieCard from './components/MovieCard';
 import Pagination from './components/Pagination';
 import MovieDetails from './pages/MovieDetails';
 import { useDebounce } from 'react-use';
-import { updateSearchCount, getTrendingMovies  } from './appwrite';
+import { updateSearchCount, getTrendingMovies } from './appwrite';
 import { API_BASE_URL, API_OPTIONS } from './api';
+import type { Movie, TrendingMovie, MovieListResponse } from './types';
 
 const App = () => {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const [movieList, setMovieList] = useState([]);
+  const [movieList, setMovieList] = useState<Movie[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const [trendingMovies, setTrendingMovies] = useState([]);
+  const [trendingMovies, setTrendingMovies] = useState<TrendingMovie[]>([]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalResults, setTotalResults] = useState(0);
 
   // Ref for scrolling to "All Movies" section on page change
-  const allMoviesRef = useRef(null);
+  const allMoviesRef = useRef<HTMLDivElement>(null);
   // Flag to only scroll after pagination clicks, not on initial load or search changes
   const shouldScrollRef = useRef(false);
 
@@ -46,17 +47,16 @@ const App = () => {
       if (!response.ok) {
         throw new Error('Failed to fetch movies');
       }
-      const data = await response.json();
-      if (data.response === 'false') {
-        setErrorMessage(data.Error || 'Failed to fetch movies');
+      const data: MovieListResponse = await response.json();
+      if (!data.results) {
+        setErrorMessage('Failed to fetch movies');
         setMovieList([]);
         return;
       }
 
-      setMovieList(data.results || []);
+      setMovieList(data.results);
       // TMDB API errors beyond page 500, so cap it there
       setTotalPages(Math.min(data.total_pages || 0, 500));
-      setTotalResults(data.total_results || 0);
 
       // Only track search analytics on page 1 to avoid duplicate counts per query
       if (query && data.results.length > 0 && page === 1) {
@@ -100,7 +100,7 @@ const App = () => {
     }
   }, [loading]);
 
-  const handlePageChange = (page) => {
+  const handlePageChange = (page: number) => {
     shouldScrollRef.current = true;
     setCurrentPage(page);
     fetchMovies(debouncedSearchTerm, page);

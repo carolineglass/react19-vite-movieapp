@@ -1,6 +1,9 @@
-import React from 'react'
+interface SearchProps {
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+}
 
-const Search = ({searchTerm, setSearchTerm}) => {
+const Search = ({searchTerm, setSearchTerm}: SearchProps) => {
 
     return (
         <div className='search'>

@@ -1,9 +1,15 @@
 import { useState } from 'react'
 
-const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}
+
+const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) => {
   const [inputValue, setInputValue] = useState(currentPage.toString());
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
 
@@ -17,7 +23,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
     }
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       handleInputBlur();
     }
@@ -25,7 +31,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
 
   // Sync input value when currentPage changes externally (e.g. from the other pagination),
   // but skip if the user is currently typing in a number input to avoid overwriting their input
-  if (parseInt(inputValue, 10) !== currentPage && document.activeElement?.type !== 'number') {
+  if (parseInt(inputValue, 10) !== currentPage && (document.activeElement as HTMLInputElement)?.type !== 'number') {
     setInputValue(currentPage.toString());
   }
 

@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Spinner from '../components/Spinner';
 import { API_BASE_URL, API_OPTIONS } from '../api';
+import type { MovieDetailsData } from '../types';
 
 const MovieDetails = () => {
   const { id } = useParams();
-  const [movie, setMovie] = useState(null);
+  const [movie, setMovie] = useState<MovieDetailsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -61,12 +62,12 @@ const MovieDetails = () => {
     genres, budget, revenue, production_companies, spoken_languages,
   } = movie;
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number) => {
     if (!amount) return 'N/A';
     return `$${amount.toLocaleString()}`;
   };
 
-  const formatRuntime = (mins) => {
+  const formatRuntime = (mins: number) => {
     if (!mins) return 'N/A';
     const hours = Math.floor(mins / 60);
     const minutes = mins % 60;

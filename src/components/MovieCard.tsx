@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
+import type { Movie } from '../types'
 
 const MovieCard = ({ movie:
     {id, title, vote_average, poster_path, release_date, original_language}
-}) => {
+}: { movie: Movie }) => {
   return (
     <li className='movie-card'>
       <Link to={`/movie/${id}`}>

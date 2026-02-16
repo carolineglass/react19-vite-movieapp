@@ -1,4 +1,5 @@
 import { Client, Databases, ID, Query } from 'appwrite';
+import type { Movie, TrendingMovie } from './types';
 
 const PROJECT_ID = import.meta.env.VITE_APPWRITE_PROJECT_ID;
 const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
@@ -10,7 +11,7 @@ const client = new Client()
 
 const database = new Databases(client);
 
-export const updateSearchCount = async (searchTerm, movie) => {
+export const updateSearchCount = async (searchTerm: string, movie: Movie): Promise<void> => {
     try {
         const result = await database.listDocuments(DATABASE_ID, COLLECTION_ID, [
             Query.equal('searchTerm', searchTerm),
@@ -23,7 +24,7 @@ export const updateSearchCount = async (searchTerm, movie) => {
                 COLLECTION_ID,
                 doc.$id,
                 {
-                    count: doc.count + 1
+                    count: (doc as unknown as TrendingMovie).count + 1
                 }
             );
         } else {
@@ -44,15 +45,16 @@ export const updateSearchCount = async (searchTerm, movie) => {
     }
 }
 
-export const getTrendingMovies = async () => {
+export const getTrendingMovies = async (): Promise<TrendingMovie[]> => {
     try {
         const result = await database.listDocuments(DATABASE_ID, COLLECTION_ID, [
             Query.limit(5),
             Query.orderDesc('count'),
         ]);
 
-        return result.documents;
+        return result.documents as unknown as TrendingMovie[];
     } catch (error) {
         console.error('Error fetching trending movies:', error);
+        return [];
     }
 }
